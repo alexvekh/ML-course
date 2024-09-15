@@ -1,0 +1,12 @@
+[workspace]
+restore_data_on_startup = True
+save_data_on_exit = True
+save_history = True
+save_non_project_files = False
+project_type = 'empty-project-type'
+recent_files = ['scripts\\mod_01_topic_02_pandas_eda.py', 'scripts\\mod_02_topic_03_linear_regression.py', '..\\NEO_MLF_BLENDED\\lesson-1\\blended_1.py', 'scripts\\mod_02_topic_04_time_series.py', 'homework\\hw4.py']
+
+[main]
+version = 0.2.0
+recent_files = []
+
