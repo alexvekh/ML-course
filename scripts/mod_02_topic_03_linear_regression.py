@@ -48,13 +48,14 @@ g.tight_layout()
 
 plt.show()
 
+
 # %%
 
 features_of_interest = ['AveRooms', 'AveBedrms', 'AveOccup', 'Population']
 data[features_of_interest].describe()
 
 # %%
-
+# Мапа
 fig, ax = plt.subplots(figsize=(6, 5))
 
 sns.scatterplot(
