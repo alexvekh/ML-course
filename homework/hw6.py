@@ -262,8 +262,8 @@ plt.title(f'class = {target_class}');
 
 # %%
 # результати прошгнозів
-ConfusionMatrixDisplay.from_predictions(y_test, pred)
-plt.show()
+# ConfusionMatrixDisplay.from_predictions(y_test, pred)
+# plt.show()
 
 # %%
 # 8. Розраховуємо метрики нової моделі за допомогою методу classification_report()

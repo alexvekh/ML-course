@@ -224,6 +224,40 @@ y_train.value_counts(normalize=True)
 pred = clf.predict(X_test)
 
 # %%
+
+# Варіант для витягування вірогідностей
+threshold = 0.50
+
+y_pred_proba = pd.Series(clf.predict_proba(X_test)[:,1])
+print(y_pred_proba)
+
+y_pred = y_pred_proba.apply(lambda x: 'Yes' if x > threshold else 'No')
+print(y_pred)
+
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+plt.show()
+
+print(classification_report(y_test, y_pred))
+
+df_proba = pd.DataFrame()
+df_proba['y_pred_proba'] = y_pred_proba
+df_proba['y_test'] = y_test
+
+target_class = 'Yes'
+
+df_proba[
+    (df_proba['y_pred_proba'] < threshold) &
+    (df_proba['y_test'] == target_class)
+]['y_pred_proba'].hist(bins=20, color='red');
+
+df_proba[
+    (df_proba['y_pred_proba'] >= threshold) &
+    (df_proba['y_test'] == target_class)
+]['y_pred_proba'].hist(bins=20, color='green');
+
+plt.title(f'class = {target_class}');
+
+# %%
 # Оцінювання точності моделі
 # Оскільки в нас є дисбаланс класів, метрика точності (accuracy) може бути неінформативною 
 # для оцінки ефективності нашого класифікатора. Тому будуємо confusion matrix:
