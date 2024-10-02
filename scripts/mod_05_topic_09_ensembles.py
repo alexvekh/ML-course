@@ -210,7 +210,7 @@ prd_stk_clf = predict_with_measure(mod_stk_clf, X_test, y_test)
 # Порівняння ефективності ансамблів
 # Перетворюємо словник f1_scores на таблицю, сортуємо й розглядаємо результати.
 
-scores = pd.DataFrame.from_dict(
+scores = pd.DataFrame.from_dict(  
     f1_scores,
     orient='index',
     columns=['f1', 'time'])
