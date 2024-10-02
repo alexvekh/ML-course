@@ -86,9 +86,12 @@ sm = SMOTE(random_state=42)
 X_res, y_res = sm.fit_resample(X_train, y_train)
 
 # %%
-
+# Практика застосування ансамблів. Навчання й оцінка ансамблів моделей
+    # Створимо допоміжну функцію, яка автоматично розраховуватиме для нас час надання прогнозів на тестовій вибірці та F1. 
+    # Результати будемо виводити (print) і зберігати у словнику f1_scores для подальшого порівняння ансамблів.
+    # (у випадках, де важливими є швидкість реакції чи обробка великих обсягів даних, час отримання прогнозів може стати ключовим фактором.)
+    # Наша допоміжна функція реалізована як декоратор, який приймає іншу функцію як аргумент і розширює її “функціональність”, не змінюючи код.
 f1_scores = {}
-
 
 def measure_f1_time_decorator(func):
     def wrapper(*args, **kwargs):
@@ -111,7 +114,7 @@ def predict_with_measure(model, Xt, yt):
 
 
 # %%
-
+# Побудова базової моделі (baseline) точність якої потім порівняємо з точністю ансамблів (виберемо логістичну регресію):
 mod_log_reg = (LogisticRegression(
     # n_jobs=-1
 ).fit(X_res, y_res))
@@ -119,7 +122,7 @@ mod_log_reg = (LogisticRegression(
 prd_log_reg = predict_with_measure(mod_log_reg, X_test, y_test)
 
 # %%
-
+# Побудова RandomForestClassifier. Будуємо й оцінюємо ансамбль “глибоких” дерев рішень Random Forest:
 mod_rnd_frs = (RandomForestClassifier(
     random_state=42,
     # n_jobs=-1
@@ -129,7 +132,9 @@ mod_rnd_frs = (RandomForestClassifier(
 prd_rnd_frs = predict_with_measure(mod_rnd_frs, X_test, y_test)
 
 # %%
-
+# Побудова Bagging Classifier
+# Будуємо й оцінюємо ансамбль моделей за принципом bagging, використовуючи алгоритм kNN. У нашому ансамблі кожна модель 
+# навчатиметься на випадкових підмножинах, що складаються з 75% об'єктів та ознак тренувальної вибірки.
 mod_bag_knn = (BaggingClassifier(
     KNeighborsClassifier(),
     max_samples=0.75,
@@ -142,6 +147,7 @@ prd_bag_knn = predict_with_measure(mod_bag_knn, X_test, y_test)
 
 # %%
 
+# Побудова AdaBoostClassifier. Будуємо й оцінюємо ансамбль моделей для класифікації за методом Ada Boost:
 mod_ada_bst = (AdaBoostClassifier(
     algorithm='SAMME',
     random_state=42)
@@ -150,6 +156,13 @@ mod_ada_bst = (AdaBoostClassifier(
 prd_ada_bst = predict_with_measure(mod_ada_bst, X_test, y_test)
 
 # %%
+# Побудова GradientBoostingClassifier. Створюємо та оцінюємо ансамбль моделей за методом Gradient Boost.
+# задаємо гіперпараметри subsample=0.75 і max_features='sqrt':
+    #- subsample: частка спостережень, на якій будуть навчатися базові моделі. 
+        # Якщо частка менше 1.0, то алгоритм починає працювати за методом Stohastic Gradient Boost; 
+    #- max_features: кількість ознак, які слід враховувати для пошуку найкращого розбиття при навчанні дерева рішень (базової моделі).
+# Визначення параметрів 0.0 < subsample < 1.0 і max_features < n_features приводить до зменшення дисперсії прогнозів (low variance), 
+# але потенційно може збільшити похибку моделі (high bias):
 
 mod_grd_bst = (GradientBoostingClassifier(
     learning_rate=0.3,
@@ -162,6 +175,8 @@ prd_grd_bst = predict_with_measure(mod_grd_bst, X_test, y_test)
 
 # %%
 
+# Побудова VotingClassifier (за принципом soft voting, використовуючи три моделі різних типів 
+# з їхніми базовими налаштуваннями в пакеті sklearn (LogisticRegression, KNeighborsClassifier, GaussianNB)):
 clf1 = LogisticRegression()
 clf2 = KNeighborsClassifier()
 clf3 = GaussianNB()
@@ -178,6 +193,8 @@ prd_vot_clf = predict_with_measure(mod_vot_clf, X_test, y_test)
 
 # %%
 
+# Побудова StackingClassifier (за принципом stacking). Для цього ми використовуємо той самий набір базових моделей, 
+# але додатково створюємо над ними метамодель типу GradientBoostingClassifier. (метамодель у нашому ансамблі сама є ансамблем моделей!)
 final_estimator = GradientBoostingClassifier(
     subsample=0.75,
     max_features='sqrt',
@@ -190,6 +207,8 @@ mod_stk_clf = StackingClassifier(
 prd_stk_clf = predict_with_measure(mod_stk_clf, X_test, y_test)
 
 # %%
+# Порівняння ефективності ансамблів
+# Перетворюємо словник f1_scores на таблицю, сортуємо й розглядаємо результати.
 
 scores = pd.DataFrame.from_dict(
     f1_scores,
@@ -197,3 +216,13 @@ scores = pd.DataFrame.from_dict(
     columns=['f1', 'time'])
 
 scores.sort_values('f1', ascending=False)
+
+# З аналізу таблиці можна зробити висновок, що метод Stohastic Gradient Boost показав найкращий результат за метрикою F1. 
+# Це свідчить про його високу ефективність у прогнозуванні на цьому наборі даних. Також слід зазначити, що всі ансамблі моделей 
+# перевищили базову модель за ефективністю, що підкреслює доцільність використання ансамблів для покращення результатів прогнозування.
+
+# Щодо часу отримання прогнозів, важливо враховувати його залежність від конкретних умов виконання скрипта, параметрів середовища, 
+# і розміру тестової вибірки. Тому треба аналізувати не абсолютні значення часу, а порівнювати їх між собою.
+# Наприклад, BaggingClassifier, який у нашому випадку використовує kNN-моделі, продемонстрував найбільший час видачі прогнозів, 
+# оскільки обчислення відстаней між об’єктами в kNN відбуваються саме на етапі прогнозування.
+# А GradientBoostingClassifier працює швидше за Random Forest, оскільки, серед іншого, використовує менш глибокі дерева рішень.
